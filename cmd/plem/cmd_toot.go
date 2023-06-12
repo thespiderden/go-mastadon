@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
@@ -24,10 +24,10 @@ func cmdToot(c *cli.Context) error {
 		}
 		toot = argstr(c)
 	}
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	_, err := client.PostStatus(context.Background(), &mastodon.Toot{
+	client := c.App.Metadata["client"].(*masta.Client)
+	_, err := client.PostStatus(context.Background(), &masta.Toot{
 		Status:      toot,
-		InReplyToID: mastodon.ID(fmt.Sprint(c.String("i"))),
+		InReplyToID: masta.ID(fmt.Sprint(c.String("i"))),
 	})
 	return err
 }

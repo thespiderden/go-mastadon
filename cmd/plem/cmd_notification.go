@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
 func cmdNotification(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
+	client := c.App.Metadata["client"].(*masta.Client)
 	notifications, err := client.GetNotifications(context.Background(), nil)
 	if err != nil {
 		return err

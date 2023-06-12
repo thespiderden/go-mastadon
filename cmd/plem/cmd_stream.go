@@ -9,13 +9,13 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
 // SimpleJSON is a struct for output JSON for data to be simple used
 type SimpleJSON struct {
-	ID       mastodon.ID `json:"id"`
+	ID       masta.ID `json:"id"`
 	Username string      `json:"username"`
 	Acct     string      `json:"acct"`
 	Avatar   string      `json:"avatar"`
@@ -50,15 +50,15 @@ func cmdStream(c *cli.Context) error {
 		return err
 	}
 
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	config := c.App.Metadata["config"].(*mastodon.Config)
+	client := c.App.Metadata["client"].(*masta.Client)
+	config := c.App.Metadata["config"].(*masta.Config)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, os.Interrupt)
 
-	var q chan mastodon.Event
+	var q chan masta.Event
 
 	t := c.String("type")
 	if t == "public" {
@@ -88,7 +88,7 @@ func cmdStream(c *cli.Context) error {
 			json.NewEncoder(c.App.Writer).Encode(e)
 		} else if asSimpleJSON {
 			switch t := e.(type) {
-			case *mastodon.UpdateEvent:
+			case *masta.UpdateEvent:
 				json.NewEncoder(c.App.Writer).Encode(&SimpleJSON{
 					ID:       t.Status.ID,
 					Username: t.Status.Account.Username,
@@ -96,7 +96,7 @@ func cmdStream(c *cli.Context) error {
 					Avatar:   t.Status.Account.AvatarStatic,
 					Content:  textContent(t.Status.Content),
 				})
-			case *mastodon.UpdateEditEvent:
+			case *masta.UpdateEditEvent:
 				json.NewEncoder(c.App.Writer).Encode(&SimpleJSON{
 					ID:       t.Status.ID,
 					Username: t.Status.Account.Username,
@@ -109,13 +109,13 @@ func cmdStream(c *cli.Context) error {
 			tx.ExecuteTemplate(c.App.Writer, "mstdn", e)
 		} else {
 			switch t := e.(type) {
-			case *mastodon.UpdateEvent:
+			case *masta.UpdateEvent:
 				s.displayStatus(c.App.Writer, t.Status)
-			case *mastodon.UpdateEditEvent:
+			case *masta.UpdateEditEvent:
 				s.displayStatus(c.App.Writer, t.Status)
-			case *mastodon.NotificationEvent:
+			case *masta.NotificationEvent:
 				// TODO s.displayStatus(c.App.Writer, t.Notification.Status)
-			case *mastodon.ErrorEvent:
+			case *masta.ErrorEvent:
 				s.displayError(c.App.Writer, t)
 			}
 		}

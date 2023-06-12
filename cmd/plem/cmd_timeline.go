@@ -5,13 +5,13 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
 func cmdTimeline(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	config := c.App.Metadata["config"].(*mastodon.Config)
+	client := c.App.Metadata["client"].(*masta.Client)
+	config := c.App.Metadata["config"].(*masta.Config)
 	timeline, err := client.GetTimelineHome(context.Background(), nil)
 	if err != nil {
 		return err
@@ -28,8 +28,8 @@ func cmdTimelineHome(c *cli.Context) error {
 }
 
 func cmdTimelinePublic(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	config := c.App.Metadata["config"].(*mastodon.Config)
+	client := c.App.Metadata["client"].(*masta.Client)
+	config := c.App.Metadata["config"].(*masta.Config)
 	timeline, err := client.GetTimelinePublic(context.Background(), false, nil)
 	if err != nil {
 		return err
@@ -42,8 +42,8 @@ func cmdTimelinePublic(c *cli.Context) error {
 }
 
 func cmdTimelineLocal(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	config := c.App.Metadata["config"].(*mastodon.Config)
+	client := c.App.Metadata["client"].(*masta.Client)
+	config := c.App.Metadata["config"].(*masta.Config)
 	timeline, err := client.GetTimelinePublic(context.Background(), true, nil)
 	if err != nil {
 		return err
@@ -56,8 +56,8 @@ func cmdTimelineLocal(c *cli.Context) error {
 }
 
 func cmdTimelineDirect(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	config := c.App.Metadata["config"].(*mastodon.Config)
+	client := c.App.Metadata["client"].(*masta.Client)
+	config := c.App.Metadata["config"].(*masta.Config)
 	timeline, err := client.GetTimelineDirect(context.Background(), nil)
 	if err != nil {
 		return err
@@ -76,8 +76,8 @@ func cmdTimelineHashtag(c *cli.Context) error {
         local := c.Bool("local")
 	tag := strings.TrimLeft(argstr(c), "#")
 
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	config := c.App.Metadata["config"].(*mastodon.Config)
+	client := c.App.Metadata["client"].(*masta.Client)
+	config := c.App.Metadata["config"].(*masta.Config)
 	timeline, err := client.GetTimelineHashtag(context.Background(), tag, local, nil)
 	if err != nil {
 		return err

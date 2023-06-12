@@ -1,4 +1,4 @@
-module github.com/mattn/go-mastodon
+module spiderden.org/masta
 
 go 1.16
 

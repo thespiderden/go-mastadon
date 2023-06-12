@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
 func cmdFollowers(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	config := c.App.Metadata["config"].(*mastodon.Config)
+	client := c.App.Metadata["client"].(*masta.Client)
+	config := c.App.Metadata["config"].(*masta.Config)
 
 	account, err := client.GetAccountCurrentUser(context.Background())
 	if err != nil {
 		return err
 	}
-	var followers []*mastodon.Account
-	var pg mastodon.Pagination
+	var followers []*masta.Account
+	var pg masta.Pagination
 	for {
 		fs, err := client.GetAccountFollowers(context.Background(), account.ID, &pg)
 		if err != nil {

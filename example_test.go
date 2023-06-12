@@ -1,4 +1,4 @@
-package mastodon_test
+package masta_test
 
 import (
 	"context"
@@ -6,15 +6,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 )
 
 func ExampleRegisterApp() {
-	app, err := mastodon.RegisterApp(context.Background(), &mastodon.AppConfig{
-		Server:     "https://mstdn.jp",
+	app, err := masta.RegisterApp(context.Background(), &masta.AppConfig{
+		Server:     "https://arachnid.town",
 		ClientName: "client-name",
 		Scopes:     "read write follow",
-		Website:    "https://github.com/mattn/go-mastodon",
+		Website:    "https://spiderden.org/projects/masta",
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -24,8 +24,8 @@ func ExampleRegisterApp() {
 }
 
 func ExampleClient() {
-	c := mastodon.NewClient(&mastodon.Config{
-		Server:       "https://mstdn.jp",
+	c := masta.NewClient(&masta.Config{
+		Server:       "https://arachnid.town",
 		ClientID:     "client-id",
 		ClientSecret: "client-secret",
 	})
@@ -43,13 +43,13 @@ func ExampleClient() {
 }
 
 func ExamplePagination() {
-	c := mastodon.NewClient(&mastodon.Config{
-		Server:       "https://mstdn.jp",
+	c := masta.NewClient(&masta.Config{
+		Server:       "https://arachnid.town",
 		ClientID:     "client-id",
 		ClientSecret: "client-secret",
 	})
-	var followers []*mastodon.Account
-	var pg mastodon.Pagination
+	var followers []*masta.Account
+	var pg masta.Pagination
 	for {
 		fs, err := c.GetAccountFollowers(context.Background(), "1", &pg)
 		if err != nil {

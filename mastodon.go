@@ -1,5 +1,5 @@
-// Package mastodon provides functions and structs for accessing the mastodon API.
-package mastodon
+// package masta provides functions and structs for accessing the mastodon API.
+package masta
 
 import (
 	"context"

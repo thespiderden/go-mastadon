@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
@@ -13,7 +13,7 @@ func cmdUpload(c *cli.Context) error {
 	if !c.Args().Present() {
 		return errors.New("arguments required")
 	}
-	client := c.App.Metadata["client"].(*mastodon.Client)
+	client := c.App.Metadata["client"].(*masta.Client)
 	for i := 0; i < c.NArg(); i++ {
 		attachment, err := client.UploadMedia(context.Background(), c.Args().Get(i))
 		if err != nil {

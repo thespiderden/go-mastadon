@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mattn/go-mastodon"
 	"github.com/urfave/cli/v2"
+	"spiderden.org/masta"
 )
 
 func cmdInstanceActivity(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
+	client := c.App.Metadata["client"].(*masta.Client)
 	activities, err := client.GetInstanceActivity(context.Background())
 	if err != nil {
 		return err

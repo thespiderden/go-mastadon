@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
@@ -15,7 +15,7 @@ func testWithServer(h http.HandlerFunc, testFuncs ...func(*cli.App)) string {
 
 	cli.OsExiter = func(n int) {}
 
-	client := mastodon.NewClient(&mastodon.Config{
+	client := masta.NewClient(&masta.Config{
 		Server:       ts.URL,
 		ClientID:     "foo",
 		ClientSecret: "bar",
@@ -27,7 +27,7 @@ func testWithServer(h http.HandlerFunc, testFuncs ...func(*cli.App)) string {
 	app.Writer = &buf
 	app.Metadata = map[string]interface{}{
 		"client": client,
-		"config": &mastodon.Config{
+		"config": &masta.Config{
 			Server: "https://example.com",
 		},
 		"xsearch_url": ts.URL,

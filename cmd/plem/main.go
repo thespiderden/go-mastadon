@@ -15,10 +15,10 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/mattn/go-mastodon"
 	"github.com/mattn/go-tty"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/net/html"
+	"spiderden.org/masta"
 )
 
 func readFile(filename string) ([]byte, error) {
@@ -118,7 +118,7 @@ func configFile(c *cli.Context) (string, error) {
 	return file, nil
 }
 
-func getConfig(c *cli.Context) (string, *mastodon.Config, error) {
+func getConfig(c *cli.Context) (string, *masta.Config, error) {
 	file, err := configFile(c)
 	if err != nil {
 		return "", nil, err
@@ -127,7 +127,7 @@ func getConfig(c *cli.Context) (string, *mastodon.Config, error) {
 	if err != nil && !os.IsNotExist(err) {
 		return "", nil, err
 	}
-	config := &mastodon.Config{
+	config := &masta.Config{
 		Server:       "https://mstdn.jp",
 		ClientID:     "1e463436008428a60ed14ff1f7bc0b4d923e14fc4a6827fa99560b0c0222612f",
 		ClientSecret: "72b63de5bc11111a5aa1a7b690672d78ad6a207ce32e16ea26115048ec5d234d",
@@ -141,7 +141,7 @@ func getConfig(c *cli.Context) (string, *mastodon.Config, error) {
 	return file, config, nil
 }
 
-func authenticate(client *mastodon.Client, config *mastodon.Config, file string) error {
+func authenticate(client *masta.Client, config *masta.Config, file string) error {
 	email, password, err := prompt()
 	if err != nil {
 		return err
@@ -256,13 +256,13 @@ func makeApp() *cli.App {
 			Action: cmdTimelineDirect,
 		},
 		{
-			Name:   "timeline-tag",
+			Name: "timeline-tag",
 			Flags: []cli.Flag{
-				cli.BoolFlag{
+				&cli.BoolFlag{
 					Name:  "local",
 					Usage: "local tags only",
 				},
-                        },
+			},
 			Usage:  "show tagged timeline",
 			Action: cmdTimelineHashtag,
 		},
@@ -340,7 +340,7 @@ type screen struct {
 	host string
 }
 
-func newScreen(config *mastodon.Config) *screen {
+func newScreen(config *masta.Config) *screen {
 	var host string
 	u, err := url.Parse(config.Server)
 	if err == nil {
@@ -362,7 +362,7 @@ func (s *screen) displayError(w io.Writer, e error) {
 	color.Set(color.Reset)
 }
 
-func (s *screen) displayStatus(w io.Writer, t *mastodon.Status) {
+func (s *screen) displayStatus(w io.Writer, t *masta.Status) {
 	if t == nil {
 		return
 	}
@@ -400,7 +400,7 @@ func run() int {
 			return err
 		}
 
-		client := mastodon.NewClient(config)
+		client := masta.NewClient(config)
 		client.UserAgent = "mstdn"
 		app.Metadata = map[string]interface{}{
 			"client":      client,

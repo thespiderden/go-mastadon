@@ -1,4 +1,4 @@
-package mastodon
+package masta
 
 import (
 	"context"
@@ -247,7 +247,8 @@ func TestPostStatusParams(t *testing.T) {
 			Content: fmt.Sprintf("<p>%s</p>", r.FormValue("status")),
 		}
 		if r.FormValue("in_reply_to_id") != "" {
-			s.InReplyToID = ID(r.FormValue("in_reply_to_id"))
+			id := ID(r.FormValue("in_reply_to_id"))
+			s.InReplyToID = &id
 		}
 		if r.FormValue("visibility") != "" {
 			s.Visibility = (r.FormValue("visibility"))
@@ -308,8 +309,8 @@ func TestPostStatusParams(t *testing.T) {
 	if s.Content != "<p>foobar</p>" {
 		t.Fatalf("want %q but %q", "<p>foobar</p>", s.Content)
 	}
-	if s.InReplyToID != "2" {
-		t.Fatalf("want %q but %q", "2", s.InReplyToID)
+	if *s.InReplyToID != "2" {
+		t.Fatalf("want %q but %q", "2", *s.InReplyToID)
 	}
 	if s.Visibility != "unlisted" {
 		t.Fatalf("want %q but %q", "unlisted", s.Visibility)
@@ -425,7 +426,8 @@ func TestUpdateStatusParams(t *testing.T) {
 			Content: fmt.Sprintf("<p>%s</p>", r.FormValue("status")),
 		}
 		if r.FormValue("in_reply_to_id") != "" {
-			s.InReplyToID = ID(r.FormValue("in_reply_to_id"))
+			id := ID(r.FormValue("in_reply_to_id"))
+			s.InReplyToID = &id
 		}
 		if r.FormValue("visibility") != "" {
 			s.Visibility = (r.FormValue("visibility"))
@@ -486,8 +488,8 @@ func TestUpdateStatusParams(t *testing.T) {
 	if s.Content != "<p>foobar</p>" {
 		t.Fatalf("want %q but %q", "<p>foobar</p>", s.Content)
 	}
-	if s.InReplyToID != "2" {
-		t.Fatalf("want %q but %q", "2", s.InReplyToID)
+	if *s.InReplyToID != "2" {
+		t.Fatalf("want %q but %q", "2", *s.InReplyToID)
 	}
 	if s.Visibility != "unlisted" {
 		t.Fatalf("want %q but %q", "unlisted", s.Visibility)

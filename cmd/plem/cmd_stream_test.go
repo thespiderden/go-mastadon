@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 )
 
 func TestCmdStream(t *testing.T) {
@@ -35,13 +35,13 @@ data: {"content": "bar", "account":{"acct":"BAR"}}
 	}))
 	defer ts.Close()
 
-	config := &mastodon.Config{
+	config := &masta.Config{
 		Server:       ts.URL,
 		ClientID:     "foo",
 		ClientSecret: "bar",
 		AccessToken:  "zoo",
 	}
-	client := mastodon.NewClient(config)
+	client := masta.NewClient(config)
 
 	var buf bytes.Buffer
 	app := makeApp()

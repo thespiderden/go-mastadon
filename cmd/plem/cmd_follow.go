@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
 func cmdFollow(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
+	client := c.App.Metadata["client"].(*masta.Client)
 	if !c.Args().Present() {
 		return errors.New("arguments required")
 	}

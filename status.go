@@ -1,4 +1,4 @@
-package mastodon
+package masta
 
 import (
 	"bytes"
@@ -19,8 +19,8 @@ type Status struct {
 	URI                string       `json:"uri"`
 	URL                string       `json:"url"`
 	Account            Account      `json:"account"`
-	InReplyToID        interface{}  `json:"in_reply_to_id"`
-	InReplyToAccountID interface{}  `json:"in_reply_to_account_id"`
+	InReplyToID        *ID          `json:"in_reply_to_id"`
+	InReplyToAccountID *ID          `json:"in_reply_to_account_id"`
 	Reblog             *Status      `json:"reblog"`
 	Content            string       `json:"content"`
 	CreatedAt          time.Time    `json:"created_at"`
@@ -29,10 +29,10 @@ type Status struct {
 	RepliesCount       int64        `json:"replies_count"`
 	ReblogsCount       int64        `json:"reblogs_count"`
 	FavouritesCount    int64        `json:"favourites_count"`
-	Reblogged          interface{}  `json:"reblogged"`
-	Favourited         interface{}  `json:"favourited"`
-	Bookmarked         interface{}  `json:"bookmarked"`
-	Muted              interface{}  `json:"muted"`
+	Reblogged          *ID          `json:"reblogged"`
+	Favourited         bool         `json:"favourited"`
+	Bookmarked         bool         `json:"bookmarked"`
+	Muted              bool         `json:"muted"`
 	Sensitive          bool         `json:"sensitive"`
 	SpoilerText        string       `json:"spoiler_text"`
 	Visibility         string       `json:"visibility"`
@@ -43,7 +43,7 @@ type Status struct {
 	Poll               *Poll        `json:"poll"`
 	Application        Application  `json:"application"`
 	Language           string       `json:"language"`
-	Pinned             interface{}  `json:"pinned"`
+	Pinned             bool         `json:"pinned"`
 }
 
 // StatusHistory is a struct to hold status history data.

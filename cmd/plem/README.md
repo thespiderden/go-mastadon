@@ -1,15 +1,15 @@
-# mstdn
+# plem
 
-command line tool for mstdn.jp
+command line tool for mastadon
 
 ## Usage
 
 ```
 NAME:
-   mstdn - mastodon client
+   plem - mastadon client
 
 USAGE:
-   mstdn [global options] command [command options] [arguments...]
+   plem [global options] command [command options] [arguments...]
 
 VERSION:
    0.0.1
@@ -40,7 +40,7 @@ GLOBAL OPTIONS:
 ## Installation
 
 ```
-$ go get github.com/mattn/go-mastodon/cmd/mstdn
+$ go install spiderden.org/masta/cmd/plem@latest
 ```
 
 ## License

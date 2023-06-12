@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mattn/go-mastodon"
+	"spiderden.org/masta"
 	"github.com/urfave/cli/v2"
 )
 
 func cmdAccount(c *cli.Context) error {
-	client := c.App.Metadata["client"].(*mastodon.Client)
+	client := c.App.Metadata["client"].(*masta.Client)
 	account, err := client.GetAccountCurrentUser(context.Background())
 	if err != nil {
 		return err

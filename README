@@ -1,0 +1,15 @@
+go-mastadon
+
+A Go library for the Mastadon network.
+
+This is a fork of go-mastodon by mattn (see, ATTRIBUTION) that adds
+support for Pleroma extensions and makes some conservative
+improvements to the library.
+
+It's mostly backwards compatible, but you may need to make small
+(but good) changes to your program. For example, many uses of
+empty interfaces are gone, and are now pointers or plain values.
+
+To add it to your project, run the following in its directory:
+
+go get spiderden.org/masta

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mattn/go-mastodon"
 	"github.com/urfave/cli/v2"
+	"spiderden.org/masta"
 )
 
 func cmdSearch(c *cli.Context) error {
@@ -14,8 +14,8 @@ func cmdSearch(c *cli.Context) error {
 		return errors.New("arguments required")
 	}
 
-	client := c.App.Metadata["client"].(*mastodon.Client)
-	config := c.App.Metadata["config"].(*mastodon.Config)
+	client := c.App.Metadata["client"].(*masta.Client)
+	config := c.App.Metadata["config"].(*masta.Config)
 
 	results, err := client.Search(context.Background(), argstr(c), false)
 	if err != nil {
