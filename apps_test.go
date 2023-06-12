@@ -26,7 +26,7 @@ func TestRegisterApp(t *testing.T) {
 			fmt.Fprintln(w, `<html><head><title>Apps</title></head></html>`)
 			return
 		}
-		fmt.Fprintln(w, `{"id": 123, "client_id": "foo", "client_secret": "bar"}`)
+		fmt.Fprintln(w, `{"id": "123", "client_id": "foo", "client_secret": "bar"}`)
 	}))
 	defer ts.Close()
 

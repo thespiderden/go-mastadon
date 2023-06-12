@@ -88,14 +88,14 @@ func wsMock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = conn.WriteMessage(websocket.TextMessage,
-		[]byte(`{"event":"notification","payload":"{\"id\":123}"}`))
+		[]byte(`{"event":"notification","payload":"{\"id\":\"123\"}"}`))
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	err = conn.WriteMessage(websocket.TextMessage,
-		[]byte(`{"event":"delete","payload":1234567}`))
+		[]byte(`{"event":"delete","payload":"1234567"}`))
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

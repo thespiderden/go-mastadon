@@ -293,7 +293,7 @@ func TestAccountFollow(t *testing.T) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
-		fmt.Fprintln(w, `{"id":1234567,"following":true}`)
+		fmt.Fprintln(w, `{"id":"1234567","following":true}`)
 	}))
 	defer ts.Close()
 
@@ -325,7 +325,7 @@ func TestAccountUnfollow(t *testing.T) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
-		fmt.Fprintln(w, `{"id":1234567,"following":false}`)
+		fmt.Fprintln(w, `{"id":"1234567","following":false}`)
 	}))
 	defer ts.Close()
 
@@ -357,7 +357,7 @@ func TestAccountBlock(t *testing.T) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
-		fmt.Fprintln(w, `{"id":1234567,"blocking":true}`)
+		fmt.Fprintln(w, `{"id":"1234567","blocking":true}`)
 	}))
 	defer ts.Close()
 
@@ -389,7 +389,7 @@ func TestAccountUnblock(t *testing.T) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
-		fmt.Fprintln(w, `{"id":1234567,"blocking":false}`)
+		fmt.Fprintln(w, `{"id":"1234567","blocking":false}`)
 	}))
 	defer ts.Close()
 
@@ -421,7 +421,7 @@ func TestAccountMute(t *testing.T) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
-		fmt.Fprintln(w, `{"id":1234567,"muting":true}`)
+		fmt.Fprintln(w, `{"id":"1234567","muting":true}`)
 	}))
 	defer ts.Close()
 
@@ -453,7 +453,7 @@ func TestAccountUnmute(t *testing.T) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
-		fmt.Fprintln(w, `{"id":1234567,"muting":false}`)
+		fmt.Fprintln(w, `{"id":"1234567","muting":false}`)
 	}))
 	defer ts.Close()
 
@@ -483,7 +483,7 @@ func TestGetAccountRelationship(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ids := r.URL.Query()["id[]"]
 		if ids[0] == "1234567" && ids[1] == "8901234" {
-			fmt.Fprintln(w, `[{"id":1234567},{"id":8901234}]`)
+			fmt.Fprintln(w, `[{"id":"1234567"},{"id":"8901234"}]`)
 			return
 		}
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

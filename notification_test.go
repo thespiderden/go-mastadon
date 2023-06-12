@@ -15,10 +15,10 @@ func TestGetNotifications(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/v1/notifications":
-			fmt.Fprintln(w, `[{"id": 122, "action_taken": false}, {"id": 123, "action_taken": true}]`)
+			fmt.Fprintln(w, `[{"id": "122", "action_taken": false}, {"id": "123", "action_taken": true}]`)
 			return
 		case "/api/v1/notifications/123":
-			fmt.Fprintln(w, `{"id": 123, "action_taken": true}`)
+			fmt.Fprintln(w, `{"id": "123", "action_taken": true}`)
 			return
 		case "/api/v1/notifications/clear":
 			fmt.Fprintln(w, `{}`)
@@ -71,7 +71,7 @@ func TestPushSubscription(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/v1/push/subscription":
-			fmt.Fprintln(w, ` {"id":1,"endpoint":"https://example.org","alerts":{"follow":true,"favourite":"true","reblog":"true","mention":"true"},"server_key":"foobar"}`)
+			fmt.Fprintln(w, ` {"id":"1","endpoint":"https://example.org","alerts":{"follow":true,"favourite":"true","reblog":"true","mention":"true"},"server_key":"foobar"}`)
 			return
 		}
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)

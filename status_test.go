@@ -743,7 +743,7 @@ func TestUploadMedia(t *testing.T) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
-		fmt.Fprintln(w, `{"id": 123}`)
+		fmt.Fprintln(w, `{"id": "123"}`)
 	}))
 	defer ts.Close()
 
