@@ -53,6 +53,7 @@ type Account struct {
 		IsConfirmed         *bool                   `json:"is_confirmed"`
 		IsModerator         *bool                   `json:"is_moderator"`
 		IsSuggested         *bool                   `json:"is_suggested"`
+		Relationship        *Relationship           `json:"relationship"`
 		SettingsStore       *map[string]interface{} `json:"settings_store"`
 	} `json:"pleroma"`
 }
@@ -253,12 +254,16 @@ type Relationship struct {
 	Following           bool `json:"following"`
 	FollowedBy          bool `json:"followed_by"`
 	Blocking            bool `json:"blocking"`
+	BlockedBy           bool `json:"blocked_by"`
 	Muting              bool `json:"muting"`
 	MutingNotifications bool `json:"muting_notifications"`
 	Requested           bool `json:"requested"`
 	DomainBlocking      bool `json:"domain_blocking"`
 	ShowingReblogs      bool `json:"showing_reblogs"`
 	Endorsed            bool `json:"endorsed"`
+
+	// Pleroma
+	Subscribing bool `json:"subscribing"`
 }
 
 // AccountFollow follows the account.
