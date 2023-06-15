@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -29,7 +30,7 @@ type Status struct {
 	RepliesCount       int64        `json:"replies_count"`
 	ReblogsCount       int64        `json:"reblogs_count"`
 	FavouritesCount    int64        `json:"favourites_count"`
-	Reblogged          *ID          `json:"reblogged"`
+	Reblogged          bool         `json:"reblogged"`
 	Favourited         bool         `json:"favourited"`
 	Bookmarked         bool         `json:"bookmarked"`
 	Muted              bool         `json:"muted"`
@@ -44,6 +45,24 @@ type Status struct {
 	Application        Application  `json:"application"`
 	Language           string       `json:"language"`
 	Pinned             bool         `json:"pinned"`
+
+	Pleroma *struct {
+		DirectConversationID string            `json:"direct_conversation_id"`
+		InReplyToAccountAcct string            `json:"in_reply_to_account_acct"`
+		EmojiReactions       []EmojiReaction   `json:"emoji_reactions"`
+		Content              map[string]string `json:"content"`
+		SpoilerContent       map[string]string `json:"spoiler_text"`
+		ExpiresAt            time.Time         `json:"expires_at"`
+		ParentVisible        bool              `json:"parent_visible"`
+		PinnedAt             time.Time         `json:"pinned_at"`
+	} `json:"pleroma,omitempty"`
+}
+
+type EmojiReaction struct {
+	Accounts []*Account `json:"accounts"`
+	Emoji    string     `json:"name"`
+	Count    int64      `json:"count"`
+	Me       bool       `json:"me"`
 }
 
 // StatusHistory is a struct to hold status history data.
@@ -249,6 +268,16 @@ func (c *Client) GetFavouritedBy(ctx context.Context, id ID, pg *Pagination) ([]
 	return accounts, nil
 }
 
+// PlGetReactions returns a post's reactions and their reactors.
+func (c *Client) PlGetReactions(ctx context.Context, id ID, withmuted bool) (reactions []EmojiReaction, err error) {
+	params := url.Values{}
+	if withmuted {
+		params.Add("with_muted", "true")
+	}
+	err = c.doAPI(ctx, http.MethodGet, fmt.Sprintf("/api/v1/pleroma/statuses/%s/reactions", id), params, &reactions, nil)
+	return
+}
+
 // Reblog reblogs the toot of id and returns status of reblog.
 func (c *Client) Reblog(ctx context.Context, id ID) (*Status, error) {
 	var status Status
@@ -325,6 +354,24 @@ func (c *Client) GetTimelinePublic(ctx context.Context, isLocal bool, pg *Pagina
 	if isLocal {
 		params.Set("local", "t")
 	}
+
+	var statuses []*Status
+	err := c.doAPI(ctx, http.MethodGet, "/api/v1/timelines/public", params, &statuses, pg)
+	if err != nil {
+		return nil, err
+	}
+	return statuses, nil
+}
+
+// PlGetTimelineRemote return statuses from public timeline of a particular instance.
+// If instance is empty, it is equivalent to Client.GetTimelinePublic(ctx, true, pg)
+func (c *Client) PlGetTimelineRemote(ctx context.Context, instance string, pg *Pagination) ([]*Status, error) {
+	if instance == "" {
+		return c.GetTimelinePublic(ctx, true, pg)
+	}
+
+	params := url.Values{}
+	params.Set("instance", instance)
 
 	var statuses []*Status
 	err := c.doAPI(ctx, http.MethodGet, "/api/v1/timelines/public", params, &statuses, pg)
@@ -441,7 +488,56 @@ func (c *Client) DeleteStatus(ctx context.Context, id ID) error {
 	return c.doAPI(ctx, http.MethodDelete, fmt.Sprintf("/api/v1/statuses/%s", id), nil, nil, nil)
 }
 
+// SearchOpts represent the options that may be supplied to spiderden.org/masta/DoSearch.
+// Fields that are strings have useful zero values, and will be excluded
+// Pagination.SinceID does nothing.
+// NOTE: This may be appended to in the future, as options are added on the API.
+type SearchOpts struct {
+	Type              string // The type of the search, i.e. "account" or "status"
+	ExcludeUnreviewed bool   // Filter out unreviewed tags.
+	Resolve           bool   // Attempt a WebFinger lookup.
+	Following         bool   // Only include accounts the user is following?
+	AccountID         string // If non-empty, search this account's posts.
+	Offset            int    // Skip this many posts.
+
+	*Pagination
+}
+
+func (s SearchOpts) params() url.Values {
+	params := &url.Values{}
+
+	stradd, badd := addParamFuncs(params)
+	stradd("type", s.Type)
+	stradd("account_id", s.AccountID)
+
+	badd("resolve", s.Resolve)
+	badd("following", s.Following)
+	badd("exclude_unreviewed", s.ExcludeUnreviewed)
+
+	if s.Offset != 0 {
+		params.Add("offset", strconv.Itoa(s.Offset))
+	}
+
+	return *params
+}
+
+// Search search content with information supplied by spiderden.org/masta/SearchStatuses
+func (c *Client) DoSearch(ctx context.Context, query string, opts SearchOpts) (*Results, error) {
+	var results Results
+
+	params := opts.params()
+	params.Add("q", query)
+	err := c.doAPI(ctx, http.MethodGet, "/api/v2/search", params, &results, opts.Pagination)
+	if err != nil {
+		return nil, err
+	}
+	return &results, nil
+}
+
 // Search search content with query.
+//
+// DEPRECATED: This function does not support modern query options.
+// Use spiderden.org/masta/DoSearch instead.
 func (c *Client) Search(ctx context.Context, q string, resolve bool) (*Results, error) {
 	params := url.Values{}
 	params.Set("q", q)
@@ -524,4 +620,20 @@ func (c *Client) DeleteConversation(ctx context.Context, id ID) error {
 // MarkConversationAsRead mark the conversation as read.
 func (c *Client) MarkConversationAsRead(ctx context.Context, id ID) error {
 	return c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/conversations/%s/read", id), nil, nil, nil)
+}
+
+// MuteConversation mutes the thread the status is a part of.
+func (c *Client) MuteConversation(ctx context.Context, id ID) (*Status, error) {
+	var status Status
+
+	err := c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/statuses/%s/mute", id), nil, &status, nil)
+	return &status, err
+}
+
+// UnmuteConversation unmutes a conversation, with id being a status from the thread..
+func (c *Client) UnmuteConversation(ctx context.Context, id ID) (*Status, error) {
+	var status Status
+
+	err := c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/statuses/%s/unmute", id), nil, &status, nil)
+	return &status, err
 }

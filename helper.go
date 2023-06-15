@@ -6,8 +6,29 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 )
+
+func addParamString(params *url.Values) func(key, value string) {
+	return func(key, value string) {
+		if value != "" {
+			params.Add(key, value)
+		}
+	}
+}
+
+func addParamBool(params *url.Values) func(key string, value bool) {
+	return func(key string, value bool) {
+		if value {
+			params.Add(key, "true")
+		}
+	}
+}
+
+func addParamFuncs(params *url.Values) (func(key, value string), func(key string, value bool)) {
+	return addParamString(params), addParamBool(params)
+}
 
 // Base64EncodeFileName returns the base64 data URI format string of the file with the file name.
 func Base64EncodeFileName(filename string) (string, error) {
@@ -51,5 +72,8 @@ func parseAPIError(prefix string, resp *http.Response) error {
 		errMsg = fmt.Sprintf("%s: %s", errMsg, e.Error)
 	}
 
-	return errors.New(errMsg)
+	return &APIError{
+		resp.StatusCode,
+		errors.New(errMsg),
+	}
 }

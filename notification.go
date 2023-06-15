@@ -19,6 +19,10 @@ type Notification struct {
 	CreatedAt time.Time `json:"created_at"`
 	Account   Account   `json:"account"`
 	Status    *Status   `json:"status"`
+	Emoji     *string   `json:"emoji"`
+	Pleroma   *struct {
+		IsSeen bool `json:"is_seen"`
+	} `json:"pleroma"`
 }
 
 type PushSubscription struct {
@@ -39,6 +43,38 @@ type PushAlerts struct {
 func (c *Client) GetNotifications(ctx context.Context, pg *Pagination) ([]*Notification, error) {
 	var notifications []*Notification
 	err := c.doAPI(ctx, http.MethodGet, "/api/v1/notifications", nil, &notifications, pg)
+	if err != nil {
+		return nil, err
+	}
+	return notifications, nil
+}
+
+type NotificationFilter struct {
+	Include   []string
+	Exclude   []string
+	AccountID ID
+}
+
+func (n NotificationFilter) params() url.Values {
+	params := url.Values{}
+	f := addParamString(&params)
+	for _, v := range n.Include {
+		f("types[]", v)
+	}
+	for _, v := range n.Exclude {
+		f("exclude_types[]", v)
+	}
+
+	f("account_id", n.AccountID)
+
+	return params
+}
+
+func (c *Client) GetNotificationsOf(ctx context.Context, fil NotificationFilter, pg *Pagination) ([]*Notification, error) {
+	var notifications []*Notification
+	params := fil.params()
+
+	err := c.doAPI(ctx, http.MethodGet, "/api/v1/notifications", params, &notifications, pg)
 	if err != nil {
 		return nil, err
 	}
@@ -128,4 +164,21 @@ func (c *Client) GetPushSubscription(ctx context.Context) (*PushSubscription, er
 		return nil, err
 	}
 	return &subscription, nil
+}
+
+// PlReadNotification marks a particular notification as read.
+func (c *Client) PlReadNotification(ctx context.Context, id ID) error {
+	params := url.Values{}
+	params.Add("id", id)
+
+	return c.doAPI(ctx, http.MethodPost, "/api/v1/pleroma/notifications/read", params, nil, nil)
+}
+
+// PlReadNotificationsTo marks all notifications until a particular ID as read.
+func (c *Client) PlReadNotificationsTo(ctx context.Context, id ID) error {
+	params := url.Values{}
+	fmt.Println(id)
+	params.Add("max_id", id)
+
+	return c.doAPI(ctx, http.MethodPost, "/api/v1/pleroma/notifications/read", params, nil, nil)
 }

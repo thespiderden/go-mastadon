@@ -32,6 +32,29 @@ type Account struct {
 	Bot            bool           `json:"bot"`
 	Discoverable   bool           `json:"discoverable"`
 	Source         *AccountSource `json:"source"`
+	// TODO: Split off some of these fields into their own objects,
+	// or do something to fix the Pleroma API's dumpster fire of redundant
+	// data.
+	Pleroma *struct {
+		AcceptsChatMessages bool                    `json:"accepts_chat_messages"`
+		AlsoKnownAs         []string                `json:"also_known_as"`
+		AllowFollowingMove  bool                    `json:"allow_following_move"`
+		ApID                string                  `json:"ap_id"`
+		ChatToken           *string                 `json:"chat_token"`
+		BackgroundImage     *string                 `json:"background_image"`
+		Deactivated         bool                    `json:"deactivated"`
+		Favicon             *string                 `json:"favicon"`
+		HideFavorites       bool                    `json:"hide_favorites"`
+		HideFollowers       bool                    `json:"hide_followers"`
+		HideFollowersCount  bool                    `json:"hide_followers_count"`
+		HideFollows         bool                    `json:"hide_follows"`
+		HideFollowsCount    bool                    `json:"hide_follows_count"`
+		IsAdmin             *bool                   `json:"is_admin"`
+		IsConfirmed         *bool                   `json:"is_confirmed"`
+		IsModerator         *bool                   `json:"is_moderator"`
+		IsSuggested         *bool                   `json:"is_suggested"`
+		SettingsStore       *map[string]interface{} `json:"settings_store"`
+	} `json:"pleroma"`
 }
 
 // Field is a Mastodon account profile field.
@@ -48,6 +71,12 @@ type AccountSource struct {
 	Language  *string  `json:"language"`
 	Note      *string  `json:"note"`
 	Fields    *[]Field `json:"fields"`
+	Pleroma   *struct {
+		ShowRole     *bool  `json:"show_role"`
+		NoRichText   *bool  `json:"no_rich_text"`
+		Discoverable bool   `json:"discoverable"`
+		ActorType    string `json:"actor_type"`
+	}
 }
 
 // GetAccount return Account.
@@ -130,9 +159,46 @@ func (c *Client) AccountUpdate(ctx context.Context, profile *Profile) (*Account,
 }
 
 // GetAccountStatuses return statuses by specified account.
+//
+// DEPRECATED: Does not support modern options, use GetAcctStatuses.
 func (c *Client) GetAccountStatuses(ctx context.Context, id ID, pg *Pagination) ([]*Status, error) {
 	var statuses []*Status
 	err := c.doAPI(ctx, http.MethodGet, fmt.Sprintf("/api/v1/accounts/%s/statuses", url.PathEscape(string(id))), nil, &statuses, pg)
+	if err != nil {
+		return nil, err
+	}
+	return statuses, nil
+}
+
+type AcctStatusOpts struct {
+	Limit          int
+	OnlyPinned     bool
+	OnlyMedia      bool
+	ExcludeReplies bool
+	ExcludeReblogs bool
+
+	*Pagination
+}
+
+func (a AcctStatusOpts) params() url.Values {
+	params := url.Values{}
+
+	if a.Limit > 0 {
+		params.Add("limit", strconv.Itoa(a.Limit))
+	}
+
+	badd := addParamBool(&params)
+	badd("only_pinned", a.OnlyPinned)
+	badd("only_media", a.OnlyMedia)
+	badd("exclude_replies", a.ExcludeReplies)
+	badd("exclude_reblogs", a.ExcludeReblogs)
+
+	return params
+}
+
+func (c *Client) GetAcctStatuses(ctx context.Context, acctid ID, opts AcctStatusOpts) ([]*Status, error) {
+	var statuses []*Status
+	err := c.doAPI(ctx, http.MethodGet, fmt.Sprintf("/api/v1/accounts/%s/statuses", url.PathEscape(acctid)), opts.params(), &statuses, opts.Pagination)
 	if err != nil {
 		return nil, err
 	}
@@ -215,6 +281,26 @@ func (c *Client) AccountUnfollow(ctx context.Context, id ID) (*Relationship, err
 	return &relationship, nil
 }
 
+// PlAccountSubscribe subscribes the user to all statuses posted by a user
+func (c *Client) PlAccountSubscribe(ctx context.Context, id ID) (*Relationship, error) {
+	var relationship *Relationship
+	err := c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/pleroma/accounts/%s/subscribe", url.PathEscape(id)), nil, &relationship, nil)
+	if err != nil {
+		return nil, err
+	}
+	return relationship, nil
+}
+
+// PlAccountUnsubscribe removes the specified user's subscription.
+func (c *Client) PlAccountUnsubscribe(ctx context.Context, id ID) (*Relationship, error) {
+	var relationship *Relationship
+	err := c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/pleroma/accounts/%s/unsubscribe", url.PathEscape(id)), nil, &relationship, nil)
+	if err != nil {
+		return nil, err
+	}
+	return relationship, nil
+}
+
 // AccountBlock blocks the account.
 func (c *Client) AccountBlock(ctx context.Context, id ID) (*Relationship, error) {
 	var relationship Relationship
@@ -239,6 +325,28 @@ func (c *Client) AccountUnblock(ctx context.Context, id ID) (*Relationship, erro
 func (c *Client) AccountMute(ctx context.Context, id ID) (*Relationship, error) {
 	var relationship Relationship
 	err := c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/accounts/%s/mute", url.PathEscape(string(id))), nil, &relationship, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &relationship, nil
+}
+
+type AccountMuteOpts struct {
+	Notifications bool
+	Duration      int64
+}
+
+// AccountMuteWith mutes the account, with extra options.
+func (c *Client) AccountMuteWith(ctx context.Context, id ID, opts AccountMuteOpts) (*Relationship, error) {
+	var relationship Relationship
+
+	params := url.Values{}
+	params.Add("duration", strconv.FormatInt(opts.Duration, 10))
+	if opts.Notifications {
+		params.Add("notifications", "true")
+	}
+
+	err := c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/accounts/%s/mute", url.PathEscape(string(id))), params, &relationship, nil)
 	if err != nil {
 		return nil, err
 	}

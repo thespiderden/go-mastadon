@@ -1,4 +1,6 @@
-// package masta provides functions and structs for accessing the mastodon API.
+// package masta is the primary package of go-mastadon. It provides access to the
+// Mastodon API with some additional extensions for Pleroma. Functions for Pleroma
+// are prefixed with "Pl", i.e. PlFoo()
 package masta
 
 import (
@@ -233,6 +235,13 @@ type Toot struct {
 	Language    string     `json:"language"`
 	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
 	Poll        *TootPoll  `json:"poll"`
+
+	// Pleroma-exclusive fields
+
+	ContentType             string   `json:"content_type"`
+	To                      []string `json:"to"`
+	ExpiresIn               int64    `json:"expires_in"`
+	InReplyToConversationID ID       `json:"in_reply_to_conversation_id"`
 }
 
 // TootPoll holds information for creating a poll in Toot.
@@ -309,7 +318,7 @@ type Results struct {
 // Pagination is a struct for specifying the get range.
 type Pagination struct {
 	MaxID   ID
-	SinceID ID
+	SinceID ID // Has no effect with spiderden.org/masta/DoSearch
 	MinID   ID
 	Limit   int64
 }
