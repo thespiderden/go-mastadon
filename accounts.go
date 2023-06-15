@@ -161,7 +161,7 @@ func (c *Client) AccountUpdate(ctx context.Context, profile *Profile) (*Account,
 
 // GetAccountStatuses return statuses by specified account.
 //
-// DEPRECATED: Does not support modern options, use GetAcctStatuses.
+// Deprecated: Does not support modern options, use GetAcctStatuses.
 func (c *Client) GetAccountStatuses(ctx context.Context, id ID, pg *Pagination) ([]*Status, error) {
 	var statuses []*Status
 	err := c.doAPI(ctx, http.MethodGet, fmt.Sprintf("/api/v1/accounts/%s/statuses", url.PathEscape(string(id))), nil, &statuses, pg)

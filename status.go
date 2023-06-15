@@ -536,7 +536,7 @@ func (c *Client) DoSearch(ctx context.Context, query string, opts SearchOpts) (*
 
 // Search search content with query.
 //
-// DEPRECATED: This function does not support modern query options.
+// Deprecated: This function does not support modern query options.
 // Use spiderden.org/masta/DoSearch instead.
 func (c *Client) Search(ctx context.Context, q string, resolve bool) (*Results, error) {
 	params := url.Values{}
