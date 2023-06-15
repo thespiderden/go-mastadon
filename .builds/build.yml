@@ -1,0 +1,13 @@
+image: alpine/edge
+packages:
+- git
+secrets: 
+        - 05a33083-d2c4-423f-b047-7421a9c70d1c
+tasks:
+        - mirror: |
+                git clone --mirror https://git.sr.ht/~webb/murse
+                cd murse.git
+                export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+                git push --mirror git@codeberg.org:spiderden/go-mastadon
+                git push --mirror git@github.com:spiderdenorg/go-mastadon
+
