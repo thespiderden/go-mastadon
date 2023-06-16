@@ -90,6 +90,34 @@ func (c *Client) GetAccount(ctx context.Context, id ID) (*Account, error) {
 	return &account, nil
 }
 
+// GetAccountWithRelationship gets the Account with its Relationship.
+// On Pleroma instances, this will be one request, whereas on other
+// software it will be equivalent to running GetAccountRelationship
+// and GetAccount separately. Account.Pleroma may be nil if it's not
+// on Pleroma. If a separate request for relationship information is
+// made, and it fails, then Account will not be nil.
+func (c *Client) GetAccountWithRelationship(ctx context.Context, id ID) (*Account, *Relationship, error) {
+	var account Account
+
+	params := url.Values{}
+	params.Set("with_relationships", "true")
+
+	err := c.doAPI(ctx, http.MethodGet, fmt.Sprintf("/api/v1/accounts/%s", url.PathEscape(string(id))), params, &account, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if account.Pleroma == nil || account.Pleroma.Relationship == nil {
+		relationship, err := c.GetAccountRelationships(ctx, []string{id})
+		if err != nil {
+			return &account, nil, err
+		}
+		return &account, relationship[0], err
+	}
+
+	return &account, account.Pleroma.Relationship, nil
+}
+
 // GetAccountCurrentUser returns the Account of current user.
 func (c *Client) GetAccountCurrentUser(ctx context.Context) (*Account, error) {
 	var account Account
