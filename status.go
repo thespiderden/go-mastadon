@@ -338,6 +338,24 @@ func (c *Client) Unbookmark(ctx context.Context, id ID) (*Status, error) {
 	return &status, nil
 }
 
+func (c *Client) Pin(ctx context.Context, id ID) (*Status, error) {
+	var status Status
+	err := c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/statuses/%s/pin", id), nil, &status, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &status, err
+}
+
+func (c *Client) Unpin(ctx context.Context, id ID) (*Status, error) {
+	var status Status
+	err := c.doAPI(ctx, http.MethodPost, fmt.Sprintf("/api/v1/statuses/%s/unpin", id), nil, &status, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &status, err
+}
+
 // GetTimelineHome return statuses from home timeline.
 func (c *Client) GetTimelineHome(ctx context.Context, pg *Pagination) ([]*Status, error) {
 	var statuses []*Status
