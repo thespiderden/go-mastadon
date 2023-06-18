@@ -47,7 +47,7 @@ type Status struct {
 	Pinned             bool         `json:"pinned"`
 
 	Pleroma *struct {
-		DirectConversationID string            `json:"direct_conversation_id"`
+		DirectConversationID int64             `json:"direct_conversation_id"`
 		InReplyToAccountAcct string            `json:"in_reply_to_account_acct"`
 		EmojiReactions       []EmojiReaction   `json:"emoji_reactions"`
 		Content              map[string]string `json:"content"`
@@ -590,7 +590,7 @@ func (c *Client) GetTimelineDirect(ctx context.Context, pg *Pagination) ([]*Stat
 		return nil, err
 	}
 
-	var statuses = []*Status{}
+	statuses := []*Status{}
 
 	for _, c := range conversations {
 		s := c.LastStatus
