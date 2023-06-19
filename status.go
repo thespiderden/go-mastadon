@@ -103,6 +103,8 @@ type Source struct {
 	ID          ID     `json:"id"`
 	Text        string `json:"text"`
 	SpoilerText string `json:"spoiler_text"`
+
+	ContentType string `json:"content_type"` // Pleroma
 }
 
 // Conversation holds information for a mastodon conversation.
@@ -498,6 +500,29 @@ func (c *Client) postStatus(ctx context.Context, toot *Toot, update bool, update
 	if err != nil {
 		return nil, err
 	}
+	return &status, nil
+}
+
+type MediaUpdate struct {
+	Thumbnail   ID
+	Description string
+	Focus       string
+}
+
+func (c *Client) UpdateMedia(ctx context.Context, id ID, update MediaUpdate) (*Attachment, error) {
+	var status Attachment
+
+	params := url.Values{}
+	stradd := addParamString(&params)
+	stradd("thumbnail", update.Thumbnail)
+	stradd("description", update.Description)
+	stradd("focus", update.Focus)
+
+	err := c.doAPI(ctx, http.MethodPut, fmt.Sprintf("/api/v1/media/%s", id), params, &status, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	return &status, nil
 }
 
