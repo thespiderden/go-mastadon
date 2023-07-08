@@ -255,10 +255,10 @@ type Toot struct {
 }
 
 type MediaAttribute struct {
-	ID          ID     `json:"id"`
-	Description string `json:"description"`
-	Thumbnail   string `json:"thumbnail,omitempty"`
-	Focus       string `json:"focus,omitempty"`
+	ID          ID      `json:"id"`
+	Description *string `json:"description,omitempty"`
+	Thumbnail   string  `json:"thumbnail,omitempty"`
+	Focus       string  `json:"focus,omitempty"`
 }
 
 // TootPoll holds information for creating a poll in Toot.

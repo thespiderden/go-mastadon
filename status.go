@@ -480,11 +480,11 @@ func (c *Client) CompatUpdateStatus(ctx context.Context, toot *Toot, id ID) (*St
 	// For a small array like this, using a map is slower.
 	for _, statusat := range status.MediaAttachments {
 		for _, tootat := range toot.EditMediaAttributes {
-			if statusat.ID != tootat.ID {
+			if statusat.ID != tootat.ID || tootat.Description == nil {
 				continue
 			}
 
-			if tootat.Description != statusat.Description {
+			if *tootat.Description != statusat.Description {
 				// Note that we didn't check for the focus or thumbnail changes as it's unsupported
 				// on Pleroma.
 				candidates = append(candidates, tootat)
@@ -504,7 +504,7 @@ func (c *Client) CompatUpdateStatus(ctx context.Context, toot *Toot, id ID) (*St
 
 	for _, candidate := range candidates {
 		candidate := candidate
-		go func(id ID, description string) {
+		go func(id ID, description *string) {
 			attachment, err := c.UpdateMedia(ctx, id, MediaUpdate{Description: description})
 			if err != nil {
 				errch <- err
@@ -598,7 +598,7 @@ func (c *Client) postStatus(ctx context.Context, toot *Toot, update bool, update
 
 type MediaUpdate struct {
 	Thumbnail   ID
-	Description string
+	Description *string
 	Focus       string
 }
 
@@ -608,7 +608,9 @@ func (c *Client) UpdateMedia(ctx context.Context, id ID, update MediaUpdate) (*A
 	params := url.Values{}
 	stradd := addParamString(&params)
 	stradd("thumbnail", update.Thumbnail)
-	stradd("description", update.Description)
+	if update.Description != nil {
+		params.Add("description", *update.Description)
+	}
 	stradd("focus", update.Focus)
 
 	err := c.doAPI(ctx, http.MethodPut, fmt.Sprintf("/api/v1/media/%s", id), params, &status, nil)
