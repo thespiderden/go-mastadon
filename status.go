@@ -3,6 +3,7 @@ package masta
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -448,58 +449,150 @@ func (c *Client) PostStatus(ctx context.Context, toot *Toot) (*Status, error) {
 	return c.postStatus(ctx, toot, false, ID("none"))
 }
 
-// UpdateStatus updates the toot.
+// UpdateStatus updates a status, using only the Mastodon API. When editing attachments
+// on instances that might be Pleroma, CompatUpdateStatus should be used.
 func (c *Client) UpdateStatus(ctx context.Context, toot *Toot, id ID) (*Status, error) {
 	return c.postStatus(ctx, toot, true, id)
 }
 
-func (c *Client) postStatus(ctx context.Context, toot *Toot, update bool, updateID ID) (*Status, error) {
-	params := url.Values{}
-	params.Set("status", toot.Status)
-	if toot.InReplyToID != "" {
-		params.Set("in_reply_to_id", string(toot.InReplyToID))
-	}
-	if toot.MediaIDs != nil {
-		for _, media := range toot.MediaIDs {
-			params.Add("media_ids[]", string(media))
-		}
-	}
-	// Can't use Media and Poll at the same time.
-	if toot.Poll != nil && toot.Poll.Options != nil && toot.MediaIDs == nil {
-		for _, opt := range toot.Poll.Options {
-			params.Add("poll[options][]", string(opt))
-		}
-		params.Add("poll[expires_in]", fmt.Sprintf("%d", toot.Poll.ExpiresInSeconds))
-		if toot.Poll.Multiple {
-			params.Add("poll[multiple]", "true")
-		}
-		if toot.Poll.HideTotals {
-			params.Add("poll[hide_totals]", "true")
-		}
-	}
-	if toot.Visibility != "" {
-		params.Set("visibility", fmt.Sprint(toot.Visibility))
-	}
-	if toot.Language != "" {
-		params.Set("language", fmt.Sprint(toot.Language))
-	}
-	if toot.Sensitive {
-		params.Set("sensitive", "true")
-	}
-	if toot.SpoilerText != "" {
-		params.Set("spoiler_text", toot.SpoilerText)
-	}
-
-	var status Status
-	var err error
-	if !update {
-		err = c.doAPI(ctx, http.MethodPost, "/api/v1/statuses", params, &status, nil)
-	} else {
-		err = c.doAPI(ctx, http.MethodPut, fmt.Sprintf("/api/v1/statuses/%s", updateID), params, &status, nil)
-	}
+// CompatUpdateStatus is identical to UpdateStatus(), except if toot.EditMediaAttributes
+// is not empty and the attachment's alt text hasn't been updated with its data it will try to
+// call Client.UpdateMedia() for each attachment and re-update the status. This is because
+// Pleroma doesn't implement media_status. Note that only the alt text will be updated on Pleroma
+// in that situation it will be ran concurrently, and if an error occurs the status with its successfully
+// modified attachments will be returned as well as an error from one of the goroutines.
+// Finally, another call to UpdateStatus is made which is the return argument.
+//
+// The behaviour of this function may change, and may be removed in the future, if Pleroma
+// gets their head out of their asses and realise that basic accessibility functionality
+// from Mastodon's API is not a feature request but a bug. This is a really hacky function.
+func (c *Client) CompatUpdateStatus(ctx context.Context, toot *Toot, id ID) (*Status, error) {
+	status, err := c.UpdateStatus(ctx, toot, id)
 	if err != nil {
 		return nil, err
 	}
+
+	if len(toot.EditMediaAttributes) == 0 {
+		return status, nil
+	}
+
+	var candidates []MediaAttribute
+	// For a small array like this, using a map is slower.
+	for _, statusat := range status.MediaAttachments {
+		for _, tootat := range toot.EditMediaAttributes {
+			if statusat.ID != tootat.ID {
+				continue
+			}
+
+			if tootat.Description != statusat.Description {
+				// Note that we didn't check for the focus or thumbnail changes as it's unsupported
+				// on Pleroma.
+				candidates = append(candidates, tootat)
+			}
+
+			goto next
+		}
+	next:
+	}
+
+	if len(candidates) == 0 {
+		return status, nil
+	}
+
+	errch := make(chan error)
+	attch := make(chan *Attachment)
+
+	for _, candidate := range candidates {
+		candidate := candidate
+		go func(id ID, description string) {
+			attachment, err := c.UpdateMedia(ctx, id, MediaUpdate{Description: description})
+			if err != nil {
+				errch <- err
+				return
+			}
+			attch <- attachment
+		}(candidate.ID, candidate.Description)
+	}
+
+	for i := 0; i < len(candidates); i++ {
+		select {
+		case new := <-attch:
+			for i, att := range status.MediaAttachments {
+				if att.ID == new.ID {
+					status.MediaAttachments[i] = *new
+					break
+				}
+			}
+		case err = <-errch:
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	// "Updating the media is a part of the process! You can't say it's the whole!"
+	// Well, Lambada "Lain" Lambda... die.
+	return c.UpdateStatus(ctx, toot, id)
+}
+
+func (c *Client) postStatus(ctx context.Context, toot *Toot, update bool, updateID ID) (*Status, error) {
+	var status Status
+	if !update {
+		params := url.Values{}
+		params.Set("status", toot.Status)
+		if toot.InReplyToID != "" {
+			params.Set("in_reply_to_id", string(toot.InReplyToID))
+		}
+		if toot.MediaIDs != nil {
+			for _, media := range toot.MediaIDs {
+				params.Add("media_ids[]", string(media))
+			}
+		}
+		// Can't use Media and Poll at the same time.
+		if toot.Poll != nil && toot.Poll.Options != nil && toot.MediaIDs == nil {
+			for _, opt := range toot.Poll.Options {
+				params.Add("poll[options][]", string(opt))
+			}
+			params.Add("poll[expires_in]", fmt.Sprintf("%d", toot.Poll.ExpiresInSeconds))
+			if toot.Poll.Multiple {
+				params.Add("poll[multiple]", "true")
+			}
+			if toot.Poll.HideTotals {
+				params.Add("poll[hide_totals]", "true")
+			}
+		}
+		if toot.Visibility != "" {
+			params.Set("visibility", fmt.Sprint(toot.Visibility))
+		}
+		if toot.Language != "" {
+			params.Set("language", fmt.Sprint(toot.Language))
+		}
+		if toot.Sensitive {
+			params.Set("sensitive", "true")
+		}
+		if toot.SpoilerText != "" {
+			params.Set("spoiler_text", toot.SpoilerText)
+		}
+
+		err := c.doAPI(ctx, http.MethodPost, "/api/v1/statuses", params, &status, nil)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// For some reason using URL parameters for media_attributes is broken on Mastodon.
+		// Oh well!
+		body, err := json.Marshal(toot)
+		if err != nil {
+			return nil, err
+		}
+
+		err = c.doAPI(ctx, http.MethodPut, fmt.Sprintf("/api/v1/statuses/%s", updateID), json.RawMessage(body), &status, nil)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &status, nil
 }
 

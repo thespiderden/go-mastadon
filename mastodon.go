@@ -4,6 +4,7 @@
 package masta
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -52,6 +53,7 @@ func (c *Client) doAPI(ctx context.Context, method string, uri string, params in
 		} else {
 			body = strings.NewReader(values.Encode())
 		}
+
 		req, err = http.NewRequest(method, u.String(), body)
 		if err != nil {
 			return err
@@ -68,6 +70,12 @@ func (c *Client) doAPI(ctx context.Context, method string, uri string, params in
 		}
 
 		ct = contentType
+	} else if body, ok := params.(json.RawMessage); ok {
+		ct = "application/json"
+		req, err = http.NewRequest(method, u.String(), bytes.NewBuffer(body))
+		if err != nil {
+			return err
+		}
 	} else {
 		if method == http.MethodGet && pg != nil {
 			u.RawQuery = pg.toValues().Encode()
@@ -127,6 +135,7 @@ func (c *Client) doAPI(ctx context.Context, method string, uri string, params in
 			*pg = *pg2
 		}
 	}
+
 	return json.NewDecoder(resp.Body).Decode(&res)
 }
 
@@ -226,22 +235,30 @@ const (
 
 // Toot is a struct to post status.
 type Toot struct {
-	Status      string     `json:"status"`
-	InReplyToID ID         `json:"in_reply_to_id"`
-	MediaIDs    []ID       `json:"media_ids"`
-	Sensitive   bool       `json:"sensitive"`
-	SpoilerText string     `json:"spoiler_text"`
-	Visibility  string     `json:"visibility"`
-	Language    string     `json:"language"`
-	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
-	Poll        *TootPoll  `json:"poll"`
+	Status              string           `json:"status"`
+	InReplyToID         ID               `json:"in_reply_to_id,omitempty"`
+	MediaIDs            []ID             `json:"media_ids,omitempty"`
+	Sensitive           bool             `json:"sensitive"`
+	SpoilerText         string           `json:"spoiler_text"`
+	Visibility          string           `json:"visibility,omitempty"`
+	Language            string           `json:"language,omitempty"`
+	ScheduledAt         *time.Time       `json:"scheduled_at,omitempty"`
+	Poll                *TootPoll        `json:"poll,omitempty"`
+	EditMediaAttributes []MediaAttribute `json:"media_attributes,omitempty"`
 
 	// Pleroma-exclusive fields
 
-	ContentType             string   `json:"content_type"`
-	To                      []string `json:"to"`
-	ExpiresIn               int64    `json:"expires_in"`
-	InReplyToConversationID ID       `json:"in_reply_to_conversation_id"`
+	ContentType             string   `json:"content_type,omitempty"`
+	To                      []string `json:"to,omitempty"`
+	ExpiresIn               int64    `json:"expires_in,omitempty"`
+	InReplyToConversationID ID       `json:"in_reply_to_conversation_id,omitempty"`
+}
+
+type MediaAttribute struct {
+	ID          ID     `json:"id"`
+	Description string `json:"description,omitempty"`
+	Thumbnail   string `json:"thumbnail,omitempty"`
+	Focus       string `json:"focus,omitempty"`
 }
 
 // TootPoll holds information for creating a poll in Toot.
