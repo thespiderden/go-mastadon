@@ -256,7 +256,7 @@ type Toot struct {
 
 type MediaAttribute struct {
 	ID          ID     `json:"id"`
-	Description string `json:"description,omitempty"`
+	Description string `json:"description"`
 	Thumbnail   string `json:"thumbnail,omitempty"`
 	Focus       string `json:"focus,omitempty"`
 }
